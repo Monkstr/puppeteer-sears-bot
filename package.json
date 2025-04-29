@@ -1,13 +1,14 @@
 {
   "name": "puppeteer-sears-bot",
   "version": "1.0.0",
-  "description": "Bot to find Sears parts diagrams",
+  "description": "Bot for finding Sears parts diagrams",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
+    "axios": "^1.6.0",
     "express": "^4.18.2",
-    "puppeteer-core": "^21.3.8"
+    "cheerio": "^1.0.0-rc.12"
   }
 }

@@ -19,14 +19,14 @@ app.post('/', async (req, res) => {
     const html = response.data;
     const $ = cheerio.load(html);
 
-    // Ищем первую подходящую ссылку на модель
-    const firstLink = $('a.part-link').attr('href');
+    // Новый способ поиска ссылки
+    const firstProductLink = $('.product-card a[href]').first().attr('href');
 
-    if (!firstLink) {
+    if (!firstProductLink) {
       return res.json({ message: `Не удалось найти взрыв-схему для модели: ${model}` });
     }
 
-    const fullLink = `https://www.searspartsdirect.com${firstLink}`;
+    const fullLink = `https://www.searspartsdirect.com${firstProductLink}`;
     return res.json({ modelLink: fullLink });
 
   } catch (error) {

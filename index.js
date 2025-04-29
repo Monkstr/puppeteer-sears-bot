@@ -1,35 +1,44 @@
 const express = require('express');
-const puppeteer = require('puppeteer-core');
+const axios = require('axios');
+const cheerio = require('cheerio');
+
 const app = express();
+const port = process.env.PORT || 3000;
+
 app.use(express.json());
 
 app.post('/', async (req, res) => {
   const model = req.body.model;
-  if (!model) return res.status(400).send({ error: 'Model is required' });
-
-  const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    executablePath: process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
-  });
-
-  const page = await browser.newPage();
-  await page.goto(`https://www.searspartsdirect.com/all/search?searchTerm=${model}`, { waitUntil: 'networkidle2' });
-
-  const result = await page.evaluate(() => {
-    const link = document.querySelector('a[href*="/model/"]');
-    return link ? link.href : null;
-  });
-
-  await browser.close();
-
-  if (!result) {
-    return res.status(404).send({ error: 'Model not found' });
+  if (!model) {
+    return res.status(400).json({ error: 'Model is required' });
   }
 
-  res.send({ modelLink: result });
+  try {
+    const searchUrl = `https://www.searspartsdirect.com/all/search?searchTerm=${model}`;
+    const response = await axios.get(searchUrl);
+    const html = response.data;
+    const $ = cheerio.load(html);
+
+    // Ищем первую подходящую ссылку на модель
+    const firstLink = $('a.part-link').attr('href');
+
+    if (!firstLink) {
+      return res.json({ message: `Не удалось найти взрыв-схему для модели: ${model}` });
+    }
+
+    const fullLink = `https://www.searspartsdirect.com${firstLink}`;
+    return res.json({ modelLink: fullLink });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Ошибка при поиске модели' });
+  }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.get('/', (req, res) => {
+  res.send('Сервер работает.');
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
